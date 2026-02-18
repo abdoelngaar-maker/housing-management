@@ -8,7 +8,7 @@
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
-    "healthcheckPath": "/api/trpc/system.health?input=%7B%22timestamp%22%3A1%7D",
+    "healthcheckPath": "/health",
     "healthcheckTimeout": 30
   }
 }

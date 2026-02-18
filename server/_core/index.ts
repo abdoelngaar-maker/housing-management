@@ -59,6 +59,11 @@ async function startServer() {
   }
   app.use("/uploads", express.static(uploadsDir));
 
+  // Simple health check endpoint
+  app.get("/health", (_req, res) => {
+    res.status(200).json({ ok: true });
+  });
+
   // Auth routes (login/register)
   registerAuthRoutes(app);
 
