@@ -8,7 +8,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerAuthRoutes } from "./auth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
-import { serveStatic } from "./vite";
+import { serveStatic } from "./serveStatic";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
