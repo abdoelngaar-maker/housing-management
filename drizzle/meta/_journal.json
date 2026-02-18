@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1770518843162,
+      "tag": "0000_gorgeous_starjammers",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1770519053586,
+      "tag": "0001_low_midnight",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1770524289633,
+      "tag": "0002_jittery_maestro",
+      "breakpoints": true
+    }
+  ]
+}
