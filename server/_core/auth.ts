@@ -56,7 +56,8 @@ export async function verifySession(
     }
 
     return { openId, name };
-  } catch {
+  } catch (err) {
+    console.error("[Auth] JWT verification failed:", err);
     return null;
   }
 }
@@ -71,17 +72,58 @@ function parseCookies(cookieHeader: string | undefined): Map<string, string> {
 export async function authenticateRequest(req: Request): Promise<User | null> {
   const cookies = parseCookies(req.headers.cookie);
   const sessionCookie = cookies.get(COOKIE_NAME);
+  
+  if (!sessionCookie) {
+    return null;
+  }
+
   const session = await verifySession(sessionCookie);
 
-  if (!session) return null;
+  if (!session) {
+    console.log("[Auth] Session verification failed for cookie");
+    return null;
+  }
 
-  const user = await db.getUserByOpenId(session.openId);
-  if (!user) return null;
+  console.log("[Auth] Session verified, openId:", session.openId, "name:", session.name);
 
-  await db.upsertUser({
-    openId: user.openId,
-    lastSignedIn: new Date(),
-  });
+  let user = await db.getUserByOpenId(session.openId);
+  
+  if (!user) {
+    console.log("[Auth] User not found in DB for openId:", session.openId, "- creating user...");
+    // User exists in JWT but not in DB - create them
+    // This can happen if the DB was reset or the user was created during login but the insert failed silently
+    try {
+      await db.upsertUser({
+        openId: session.openId,
+        name: session.name,
+        email: `admin@local`,
+        loginMethod: "password",
+        role: "admin",
+        lastSignedIn: new Date(),
+      });
+      user = await db.getUserByOpenId(session.openId);
+      console.log("[Auth] User created successfully:", user ? "found" : "still not found");
+    } catch (error) {
+      console.error("[Auth] Failed to create user:", error);
+      return null;
+    }
+  }
+
+  if (!user) {
+    console.log("[Auth] User still null after upsert attempt");
+    return null;
+  }
+
+  // Update last signed in
+  try {
+    await db.upsertUser({
+      openId: user.openId,
+      lastSignedIn: new Date(),
+    });
+  } catch (error) {
+    // Non-critical, just log
+    console.warn("[Auth] Failed to update lastSignedIn:", error);
+  }
 
   return user;
 }
@@ -104,6 +146,9 @@ export function registerAuthRoutes(app: Express) {
       if (username === adminUsername && password === adminPassword) {
         // Admin login
         const openId = ENV.ownerOpenId || "admin-owner";
+        
+        console.log("[Auth] Admin login attempt, openId:", openId);
+        
         await db.upsertUser({
           openId,
           name: "المدير",
@@ -113,8 +158,15 @@ export function registerAuthRoutes(app: Express) {
           lastSignedIn: new Date(),
         });
 
+        // Verify the user was actually saved
+        const savedUser = await db.getUserByOpenId(openId);
+        console.log("[Auth] Admin user after upsert:", savedUser ? `id=${savedUser.id}, openId=${savedUser.openId}` : "NOT FOUND!");
+
         const token = await createSessionToken(openId, "المدير");
         const cookieOptions = getSessionCookieOptions(req);
+        
+        console.log("[Auth] Setting cookie with options:", JSON.stringify(cookieOptions));
+        
         res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
         res.json({ success: true, user: { name: "المدير", role: "admin" } });
         return;
@@ -134,6 +186,38 @@ export function registerAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[Auth] Login failed:", error);
       res.status(500).json({ error: "فشل تسجيل الدخول" });
+    }
+  });
+
+  // Debug endpoint to check auth status
+  app.get("/api/auth/debug", async (req: Request, res: Response) => {
+    try {
+      const cookies = parseCookies(req.headers.cookie);
+      const sessionCookie = cookies.get(COOKIE_NAME);
+      const hasCookie = !!sessionCookie;
+      
+      let session: SessionPayload | null = null;
+      let user: User | null = null;
+      
+      if (sessionCookie) {
+        session = await verifySession(sessionCookie);
+        if (session) {
+          user = await db.getUserByOpenId(session.openId) || null;
+        }
+      }
+      
+      res.json({
+        hasCookie,
+        cookieName: COOKIE_NAME,
+        sessionValid: !!session,
+        sessionOpenId: session?.openId || null,
+        sessionName: session?.name || null,
+        userFound: !!user,
+        userId: user?.id || null,
+        userRole: user?.role || null,
+      });
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
     }
   });
 
