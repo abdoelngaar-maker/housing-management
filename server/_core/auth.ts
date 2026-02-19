@@ -62,11 +62,31 @@ export async function verifySession(
   }
 }
 
+/**
+ * Parse cookies from the Cookie header string.
+ * Manual implementation to avoid dynamic require("cookie") which fails with esbuild bundling.
+ */
 function parseCookies(cookieHeader: string | undefined): Map<string, string> {
-  if (!cookieHeader) return new Map();
-  const { parse } = require("cookie");
-  const parsed = parse(cookieHeader);
-  return new Map(Object.entries(parsed));
+  const map = new Map<string, string>();
+  if (!cookieHeader) return map;
+
+  const pairs = cookieHeader.split(";");
+  for (const pair of pairs) {
+    const eqIdx = pair.indexOf("=");
+    if (eqIdx < 0) continue;
+    const key = pair.substring(0, eqIdx).trim();
+    let val = pair.substring(eqIdx + 1).trim();
+    // Remove surrounding quotes if present
+    if (val.length >= 2 && val[0] === '"' && val[val.length - 1] === '"') {
+      val = val.slice(1, -1);
+    }
+    try {
+      map.set(key, decodeURIComponent(val));
+    } catch {
+      map.set(key, val);
+    }
+  }
+  return map;
 }
 
 export async function authenticateRequest(req: Request): Promise<User | null> {
@@ -91,7 +111,6 @@ export async function authenticateRequest(req: Request): Promise<User | null> {
   if (!user) {
     console.log("[Auth] User not found in DB for openId:", session.openId, "- creating user...");
     // User exists in JWT but not in DB - create them
-    // This can happen if the DB was reset or the user was created during login but the insert failed silently
     try {
       await db.upsertUser({
         openId: session.openId,
@@ -114,14 +133,13 @@ export async function authenticateRequest(req: Request): Promise<User | null> {
     return null;
   }
 
-  // Update last signed in
+  // Update last signed in (non-critical)
   try {
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: new Date(),
     });
   } catch (error) {
-    // Non-critical, just log
     console.warn("[Auth] Failed to update lastSignedIn:", error);
   }
 
