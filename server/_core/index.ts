@@ -8,6 +8,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerAuthRoutes } from "./auth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { initializeDatabase } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -45,6 +46,9 @@ function serveStaticFiles(app: express.Express) {
 }
 
 async function startServer() {
+  // Initialize database tables
+  await initializeDatabase();
+
   const app = express();
   const server = createServer(app);
 
