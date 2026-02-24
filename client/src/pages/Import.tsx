@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileUp, Loader2, CheckCircle2, AlertCircle, FileSpreadsheet, Download, Table2, Clock } from "lucide-react";
+import { FileUp, Loader2, CheckCircle2, AlertCircle, FileSpreadsheet, Download, Table2, FileText, Clock } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
