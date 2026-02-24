@@ -55,6 +55,8 @@ export const appRouter = router({
       floor: z.string().optional(),
       rooms: z.number().min(1).default(1),
       beds: z.number().min(1).default(1),
+      ownerName: z.string().optional(),
+      buildingName: z.string().optional(),
       notes: z.string().optional(),
     })).mutation(async ({ input }) => {
       await createUnit({ ...input, status: "vacant", currentOccupants: 0 });
@@ -76,8 +78,14 @@ export const appRouter = router({
       return { success: true };
     }),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+      const unit = await getUnitById(input.id);
+      if (!unit) throw new Error("الوحدة غير موجودة");
+      if (unit.currentOccupants > 0) throw new Error("لا يمكن حذف وحدة مسكونة حالياً");
       await deleteUnit(input.id);
       return { success: true };
+    }),
+    detailedReport: publicProcedure.query(async () => {
+      return getDetailedUnitsReport();
     }),
     getResidents: publicProcedure.input(z.object({ unitId: z.number() })).query(async ({ input }) => {
       const egyptians = await getEgyptianResidentsByUnitId(input.unitId);

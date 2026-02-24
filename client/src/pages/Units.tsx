@@ -29,6 +29,8 @@ export default function Units() {
     floor: "",
     rooms: 1,
     beds: 2,
+    ownerName: "",
+    buildingName: "",
     notes: "",
   });
 
@@ -45,7 +47,7 @@ export default function Units() {
       utils.units.list.invalidate();
       utils.dashboard.stats.invalidate();
       setDialogOpen(false);
-      setNewUnit({ code: "", name: "", type: "apartment", floor: "", rooms: 1, beds: 2, notes: "" });
+      setNewUnit({ code: "", name: "", type: "apartment", floor: "", rooms: 1, beds: 2, ownerName: "", buildingName: "", notes: "" });
     },
     onError: (err) => toast.error("فشل في الإضافة: " + err.message),
   });
@@ -162,14 +164,32 @@ export default function Units() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>ملاحظات</Label>
-                <Input
-                  placeholder="ملاحظات إضافية (اختياري)"
-                  value={newUnit.notes}
-                  onChange={(e) => setNewUnit(p => ({ ...p, notes: e.target.value }))}
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>اسم المالك</Label>
+                    <Input
+                      placeholder="اختياري"
+                      value={newUnit.ownerName}
+                      onChange={(e) => setNewUnit(p => ({ ...p, ownerName: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>اسم العقار</Label>
+                    <Input
+                      placeholder="اختياري"
+                      value={newUnit.buildingName}
+                      onChange={(e) => setNewUnit(p => ({ ...p, buildingName: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>ملاحظات</Label>
+                  <Input
+                    placeholder="ملاحظات إضافية (اختياري)"
+                    value={newUnit.notes}
+                    onChange={(e) => setNewUnit(p => ({ ...p, notes: e.target.value }))}
+                  />
+                </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <DialogClose asChild>
@@ -247,6 +267,7 @@ export default function Units() {
                   <div>
                     <h3 className="font-bold text-lg text-card-foreground">{unit.code}</h3>
                     <p className="text-xs text-muted-foreground">{unit.name}</p>
+                    {(unit as any).buildingName && <p className="text-[10px] text-primary/70 mt-1">عقار: {(unit as any).buildingName}</p>}
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {getTypeBadge(unit.type)}

@@ -18,6 +18,7 @@ import Sectors from "./pages/Sectors";
 import ImportUnits from "./pages/ImportUnits";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
+import DetailedReport from "./pages/DetailedReport";
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function Router() {
             <Route path="/import-units" component={ImportUnits} />
             <Route path="/reports" component={Reports} />
             <Route path="/eviction" component={Eviction} />
+            <Route path="/detailed-report" component={DetailedReport} />
             <Route path="/sectors" component={Sectors} />
             <Route path="/notifications" component={Notifications} />
             <Route path="/404" component={NotFound} />

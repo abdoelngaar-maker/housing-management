@@ -52,6 +52,7 @@ const menuItems = [
   { icon: FileUp, label: "استيراد بيانات", path: "/import" },
   { icon: Download, label: "استيراد وحدات", path: "/import-units" },
   { icon: LogOut, label: "إخلاء ساكنين", path: "/eviction" },
+  { icon: FileText, label: "السجل التفصيلي", path: "/detailed-report" },
   { icon: BarChart3, label: "التقارير", path: "/reports" },
   { icon: MapPin, label: "القطاعات", path: "/sectors", adminOnly: true },
   { icon: Bell, label: "الإشعارات", path: "/notifications" },

@@ -42,6 +42,8 @@ export const units = mysqlTable("units", {
   beds: int("beds").default(1).notNull(),
   status: mysqlEnum("status", ["vacant", "occupied", "maintenance"]).default("vacant").notNull(),
   currentOccupants: int("currentOccupants").default(0).notNull(),
+  ownerName: varchar("ownerName", { length: 200 }),
+  buildingName: varchar("buildingName", { length: 200 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

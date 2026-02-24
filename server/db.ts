@@ -272,10 +272,50 @@ export async function getAllUnits(filters?: { type?: string; status?: string; se
   const conditions = [];
   if (filters?.type && filters.type !== 'all') conditions.push(eq(units.type, filters.type as any));
   if (filters?.status && filters.status !== 'all') conditions.push(eq(units.status, filters.status as any));
-  if (filters?.search) conditions.push(or(like(units.code, `%${filters.search}%`), like(units.name, `%${filters.search}%`)));
+  if (filters?.search) {
+    conditions.push(or(
+      like(units.code, `%${filters.search}%`), 
+      like(units.name, `%${filters.search}%`),
+      like(units.ownerName, `%${filters.search}%`),
+      like(units.buildingName, `%${filters.search}%`)
+    ));
+  }
   if (filters?.sectorId) conditions.push(eq(units.sectorId, filters.sectorId));
   if (conditions.length > 0) return db.select().from(units).where(and(...conditions)).orderBy(units.code);
   return db.select().from(units).orderBy(units.code);
+}
+
+export async function getDetailedUnitsReport() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const allUnits = await db.select().from(units).orderBy(units.code);
+  const sectorList = await getAllSectors();
+  const sectorMap = new Map(sectorList.map(s => [s.id, s.name]));
+  
+  const report = [];
+  
+  for (const unit of allUnits) {
+    const egyptians = await db.select().from(egyptianResidents).where(eq(egyptianResidents.unitId, unit.id));
+    const russians = await db.select().from(russianResidents).where(eq(russianResidents.unitId, unit.id));
+    
+    // Get past residents from occupancy records
+    const pastRecords = await db.select().from(occupancyRecords)
+      .where(and(eq(occupancyRecords.unitId, unit.id), eq(occupancyRecords.action, "check_out")))
+      .orderBy(desc(occupancyRecords.actionDate));
+
+    report.push({
+      ...unit,
+      sectorName: sectorMap.get(unit.sectorId || 0) || "غير محدد",
+      residents: [
+        ...egyptians.map(r => ({ ...r, type: "egyptian" })),
+        ...russians.map(r => ({ ...r, type: "russian" }))
+      ],
+      pastResidents: pastRecords
+    });
+  }
+  
+  return report;
 }
 
 export async function getUnitById(id: number) {
