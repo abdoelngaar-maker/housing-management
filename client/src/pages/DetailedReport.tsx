@@ -5,8 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Loader2, Building2, User, Phone, Calendar, ArrowRightLeft, Trash2, FileText, Download } from "lucide-react";
 import { useState, useMemo } from "react";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -42,7 +40,12 @@ export default function DetailedReport() {
 
   const formatDate = (timestamp: number | null | undefined) => {
     if (!timestamp) return "-";
-    return format(new Date(timestamp), "yyyy/MM/dd", { locale: ar });
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    } catch (e) {
+      return "-";
+    }
   };
 
   if (isLoading) {
@@ -80,7 +83,8 @@ export default function DetailedReport() {
               placeholder="بحث بكود الوحدة، اسم الساكن، المالك، أو العقار..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pr-10 h-11"
+              className="pr-10 h-11 text-right"
+              dir="rtl"
             />
           </div>
         </CardContent>
