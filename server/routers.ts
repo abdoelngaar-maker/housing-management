@@ -356,20 +356,18 @@ export const appRouter = router({
         messages: [
           {
             role: "system",
-            content: `أنت نظام OCR متخصص ومتقدم جداً في قراءة البطاقات الشخصية المصرية (بطاقة الرقم القومي). مهمتك استخراج البيانات بدقة 100%.
-
-قواعد صارمة يجب اتباعها:
-1. الاسم: استخرج الاسم الكامل كما هو مكتوب بالضبط على البطاقة (ثلاثي أو رباعي). الاسم يكون بجانب كلمة "الاسم" على البطاقة. انسخ كل حرف بدقة بما في ذلك الهمزات والتشكيل إن وجد.
-2. الرقم القومي: يتكون من 14 رقم بالضبط. اقرأ كل رقم بعناية شديدة. لا تخلط بين 0 و O أو 1 و I أو 5 و S.
-3. إذا كانت الصورة تحتوي على أكثر من بطاقة، استخرج بيانات كل بطاقة على حدة.
-4. الثقة: أعط درجة ثقة من 0-100 بناءً على وضوح الصورة.
-
-مهم: الاسم يجب أن يكون كاملاً كما هو مكتوب على البطاقة - لا تختصر أو تحذف أي جزء. مثال: "أحمد محمد علي حسن" وليس "أحمد محمد" فقط.`
+            content: `أنت نظام OCR متطور جداً متخصص في استخراج البيانات من بطاقات الرقم القومي المصرية بدقة 100%.
+            
+            قواعد الاستخراج الصارمة:
+            1. الاسم: استخرج الاسم الكامل كما هو مكتوب (ثلاثي أو رباعي أو خماسي). الاسم يقع دائماً في السطر الأول بجوار كلمة "الاسم". لا تختصر أي جزء.
+            2. الرقم القومي: يجب أن يكون 14 رقماً بالضبط. تأكد من قراءة كل رقم بدقة متناهية. الرقم الأول من اليسار يمثل القرن (2 للمواليد من 1900-1999، و3 للمواليد من 2000-2099).
+            3. العنوان: إذا طلبت، استخرج العنوان كاملاً من السطر الثاني والثالث.
+            4. درجة الثقة: حدد درجة الثقة (0-100) لكل حقل.`
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "استخرج جميع البيانات من هذه البطاقة الشخصية المصرية. الاسم يجب أن يكون كاملاً (ثلاثي أو رباعي) كما هو مكتوب بالضبط على البطاقة. الرقم القومي 14 رقم بالضبط:" },
+              { type: "text", text: "قم بتحليل هذه البطاقة المصرية واستخراج الاسم الكامل (ثلاثي/رباعي/خماسي) والرقم القومي (14 رقم) بدقة متناهية:" },
               { type: "image_url", image_url: { url: input.imageBase64, detail: "high" } }
             ]
           }
@@ -410,18 +408,18 @@ export const appRouter = router({
         messages: [
           {
             role: "system",
-            content: `أنت نظام تحقق متقدم. مهمتك إعادة قراءة البطاقة الشخصية المصرية والتحقق من البيانات المستخرجة.
-
-قواعد التحقق:
-1. الاسم: تأكد أن الاسم كامل (ثلاثي أو رباعي) كما هو مكتوب بالضبط على البطاقة. إذا كان الاسم المستخرج ناقصاً، أكمله من الصورة.
-2. الرقم القومي: يجب أن يكون 14 رقم بالضبط. تحقق من كل رقم. الرقم الأول يكون 2 أو 3 (قرن الميلاد).
-3. إذا وجدت أي خطأ، صححه من الصورة مباشرة.
-4. أعط درجة ثقة محدثة.`
+            content: `أنت خبير تدقيق بيانات الهوية المصرية. مهمتك مراجعة البيانات المستخرجة وتصحيحها من الصورة مباشرة لضمان دقة 100%.
+            
+            قواعد التدقيق:
+            1. قارن الاسم المستخرج بالصورة حرفاً بحرف. تأكد أنه الاسم الكامل كما هو مطبوع.
+            2. دقق في الرقم القومي (14 رقم). الرقم الأول يجب أن يطابق سنة الميلاد (مثلاً 2 لمواليد القرن العشرين).
+            3. إذا كان هناك أي شك، أعد قراءة الحقل من الصورة مرة أخرى بتركيز عالي.
+            4. الرقم القومي المصري لا يحتوي على حروف، فقط أرقام.`
           },
           {
             role: "user",
             content: [
-              { type: "text", text: `البيانات المستخرجة مبدئياً: ${JSON.stringify(stage1Data.results)}\n\nأعد قراءة البطاقة وتحقق من الاسم الكامل (ثلاثي/رباعي) والرقم القومي (14 رقم):` },
+              { type: "text", text: `البيانات المستخرجة في المرحلة الأولى: ${JSON.stringify(stage1Data.results)}\n\nبرجاء إعادة فحص الصورة وتصحيح أي أخطاء في الاسم أو الرقم القومي لضمان دقة 100%:` },
               { type: "image_url", image_url: { url: input.imageBase64, detail: "high" } }
             ]
           }
@@ -467,22 +465,18 @@ export const appRouter = router({
         messages: [
           {
             role: "system",
-            content: `You are an advanced OCR system specialized in reading Russian passports with 100% accuracy.
-
-Strict rules:
-1. Full Name: Extract the COMPLETE name as written on the passport (first name, patronymic if present, and surname). Read from the MRZ zone AND the visual zone. Use Latin transliteration.
-2. Passport Number: Read every digit/letter carefully from the passport. Usually 9 characters (2 digits + 7 digits or similar format).
-3. Nationality: Extract exactly as written.
-4. Gender: male or female based on the passport.
-5. If multiple passports are in the image, extract each one separately.
-6. Confidence: 0-100 based on image clarity.
-
-IMPORTANT: The name MUST be complete - do not abbreviate or skip any part.`
+            content: `You are a high-precision OCR engine for Russian passports. 100% accuracy is mandatory.
+            
+            Strict Extraction Protocol:
+            1. Full Name: Extract the COMPLETE name (Surname, Given Names, Patronymic). Cross-reference the visual zone (Cyrillic and Latin) with the MRZ zone (bottom of page). Use the Latin version.
+            2. Passport Number: Extract all digits/letters carefully. Check both the top right corner and the MRZ zone.
+            3. Nationality & Gender: Extract precisely.
+            4. MRZ Zone: Pay special attention to the machine-readable zone at the bottom to verify the passport number and name.`
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract ALL data from this Russian passport. The name must be COMPLETE (first name, patronymic, surname). Read passport number carefully digit by digit:" },
+              { type: "text", text: "Analyze this Russian passport and extract the COMPLETE Latin name and passport number with 100% accuracy:" },
               { type: "image_url", image_url: { url: input.imageBase64, detail: "high" } }
             ]
           }
@@ -525,19 +519,18 @@ IMPORTANT: The name MUST be complete - do not abbreviate or skip any part.`
         messages: [
           {
             role: "system",
-            content: `You are a verification system. Re-read the Russian passport independently and verify/correct the extracted data.
-
-Verification rules:
-1. Name must be COMPLETE (first, patronymic, surname) - if incomplete, fix it from the image.
-2. Passport number must match exactly what's on the passport.
-3. Cross-check MRZ zone with visual zone for accuracy.
-4. Correct any errors found.
-5. Update confidence score.`
+            content: `You are a professional passport data auditor. Your goal is to eliminate any errors from the initial OCR pass.
+            
+            Auditing Protocol:
+            1. Re-examine the image specifically focusing on the Passport Number and the Full Latin Name.
+            2. Compare with the initial data provided. If there's any discrepancy, the image is the source of truth.
+            3. Ensure the name includes all parts (Surname and all Given Names).
+            4. Verify the Passport Number against the MRZ zone at the bottom.`
           },
           {
             role: "user",
             content: [
-              { type: "text", text: `Previously extracted data: ${JSON.stringify(stage1Data.results)}\n\nRe-read the passport and verify the COMPLETE name and passport number:` },
+              { type: "text", text: `Initial data: ${JSON.stringify(stage1Data.results)}\n\nPlease perform a final audit of the passport image and provide the corrected, 100% accurate data:` },
               { type: "image_url", image_url: { url: input.imageBase64, detail: "high" } }
             ]
           }
