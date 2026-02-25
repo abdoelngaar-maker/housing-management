@@ -9,31 +9,46 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Download, Search, Loader2 } from "lucide-react";
 
 export default function ResidentRecords() {
-  const { data: history, isLoading } = trpc.units.residentHistory.useQuery();
+  const { data: history, isLoading, error } = trpc.units.residentHistory.useQuery();
   const [search, setSearch] = useState("");
 
+  if (error) {
+    return <div className="p-10 text-red-500">حدث خطأ أثناء تحميل البيانات: {error.message}</div>;
+  }
+
   const filteredHistory = history?.filter(r => 
-    r.name.toLowerCase().includes(search.toLowerCase()) ||
-    r.unitCode.toLowerCase().includes(search.toLowerCase()) ||
-    r.idNumber.toLowerCase().includes(search.toLowerCase())
+    (r.name?.toLowerCase().includes(search.toLowerCase())) ||
+    (r.unitCode?.toLowerCase().includes(search.toLowerCase())) ||
+    (r.idNumber?.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "-";
+    try {
+      const date = new Date(Number(dateStr));
+      if (isNaN(date.getTime())) return "-";
+      return format(date, "dd MMMM yyyy", { locale: ar });
+    } catch (e) {
+      return "-";
+    }
+  };
 
   const exportToCSV = () => {
     if (!filteredHistory) return;
     
     const headers = ["الوحدة", "الاسم", "الرقم القومي/الباسبور", "رقم الهاتف", "تاريخ التسكين", "تاريخ المغادرة"];
     const rows = filteredHistory.map(r => [
-      r.unitCode,
-      r.name,
-      r.idNumber,
-      r.phone,
+      r.unitCode || "",
+      r.name || "",
+      r.idNumber || "",
+      r.phone || "",
       r.checkInDate ? format(new Date(Number(r.checkInDate)), "yyyy-MM-dd") : "-",
       r.checkOutDate ? format(new Date(Number(r.checkOutDate)), "yyyy-MM-dd") : ""
     ]);
@@ -43,7 +58,7 @@ export default function ResidentRecords() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `سجل_الساكنين_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.setAttribute("download", `سجل_الساكنين_${new Date().getTime()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -78,7 +93,7 @@ export default function ResidentRecords() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
@@ -97,21 +112,10 @@ export default function ResidentRecords() {
                       <TableCell>{r.name}</TableCell>
                       <TableCell className="font-mono">{r.idNumber}</TableCell>
                       <TableCell>{r.phone}</TableCell>
-                      <TableCell>
-                        {r.checkInDate ? format(new Date(Number(r.checkInDate)), "dd MMMM yyyy", { locale: ar }) : "-"}
-                      </TableCell>
-                      <TableCell className="text-red-600 font-bold">
-                        {r.checkOutDate ? format(new Date(Number(r.checkOutDate)), "dd MMMM yyyy", { locale: ar }) : ""}
-                      </TableCell>
+                      <TableCell>{formatDate(r.checkInDate)}</TableCell>
+                      <TableCell className="text-red-600 font-bold">{formatDate(r.checkOutDate)}</TableCell>
                     </TableRow>
                   ))}
-                  {filteredHistory?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                        لا توجد بيانات مطابقة للبحث
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </div>

@@ -1,6 +1,4 @@
 import { trpc } from "@/lib/trpc";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
 import { 
   Table, 
   TableBody, 
@@ -9,7 +7,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -17,12 +15,16 @@ import { Download, Search, Loader2, Bed, Users, BedDouble } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function OccupancyReport() {
-  const { data: stats, isLoading } = trpc.units.occupancyStats.useQuery();
+  const { data: stats, isLoading, error } = trpc.units.occupancyStats.useQuery();
   const [search, setSearch] = useState("");
 
+  if (error) {
+    return <div className="p-10 text-red-500">حدث خطأ أثناء تحميل البيانات: {error.message}</div>;
+  }
+
   const filteredStats = stats?.filter(s => 
-    s.unitCode.toLowerCase().includes(search.toLowerCase()) ||
-    s.buildingName.toLowerCase().includes(search.toLowerCase())
+    (s.unitCode?.toLowerCase().includes(search.toLowerCase())) ||
+    (s.buildingName?.toLowerCase().includes(search.toLowerCase()))
   );
 
   const exportToCSV = () => {
@@ -30,11 +32,11 @@ export default function OccupancyReport() {
     
     const headers = ["الوحدة", "العقار", "إجمالي الأسرة", "الأسرة المشغولة", "الأسرة الفارغة", "الحالة"];
     const rows = filteredStats.map(s => [
-      s.unitCode,
-      s.buildingName,
-      s.totalBeds,
-      s.occupiedBeds,
-      s.vacantBeds,
+      s.unitCode || "",
+      s.buildingName || "",
+      s.totalBeds || 0,
+      s.occupiedBeds || 0,
+      s.vacantBeds || 0,
       s.status === "vacant" ? "فارغة" : s.status === "occupied" ? "مشغولة" : "صيانة"
     ]);
 
@@ -43,15 +45,15 @@ export default function OccupancyReport() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `تقرير_الإشغال_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.setAttribute("download", `تقرير_الإشغال_${new Date().getTime()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const totalBeds = stats?.reduce((acc, s) => acc + s.totalBeds, 0) || 0;
-  const occupiedBeds = stats?.reduce((acc, s) => acc + s.occupiedBeds, 0) || 0;
+  const totalBeds = stats?.reduce((acc, s) => acc + (s.totalBeds || 0), 0) || 0;
+  const occupiedBeds = stats?.reduce((acc, s) => acc + (s.occupiedBeds || 0), 0) || 0;
   const vacantBeds = totalBeds - occupiedBeds;
 
   return (
@@ -118,7 +120,7 @@ export default function OccupancyReport() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
@@ -145,13 +147,6 @@ export default function OccupancyReport() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filteredStats?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                        لا توجد بيانات مطابقة للبحث
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </div>
