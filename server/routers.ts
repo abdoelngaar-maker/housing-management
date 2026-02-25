@@ -15,6 +15,7 @@ import {
   findEgyptianByNameAndUnit, findRussianByNameAndUnit,
   getAllSectors, getSectorById, getSectorByCode, createSector, updateSector, deleteSector,
   assignUserToSector, getAllUsers,
+  getDetailedUnitReport, getFullResidentHistory, getOccupancyStats,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
@@ -85,13 +86,13 @@ export const appRouter = router({
       return { success: true };
     }),
     detailedReport: publicProcedure.query(async () => {
-      return getDetailedUnitsReport();
+      return getDetailedUnitReport();
     }),
     residentHistory: publicProcedure.query(async () => {
       return getFullResidentHistory();
     }),
     occupancyStats: publicProcedure.query(async () => {
-      return getOccupancyStatsReport();
+      return getOccupancyStats();
     }),
     getResidents: publicProcedure.input(z.object({ unitId: z.number() })).query(async ({ input }) => {
       const egyptians = await getEgyptianResidentsByUnitId(input.unitId);
