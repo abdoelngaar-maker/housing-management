@@ -87,6 +87,12 @@ export const appRouter = router({
     detailedReport: publicProcedure.query(async () => {
       return getDetailedUnitsReport();
     }),
+    residentHistory: publicProcedure.query(async () => {
+      return getFullResidentHistory();
+    }),
+    occupancyStats: publicProcedure.query(async () => {
+      return getOccupancyStatsReport();
+    }),
     getResidents: publicProcedure.input(z.object({ unitId: z.number() })).query(async ({ input }) => {
       const egyptians = await getEgyptianResidentsByUnitId(input.unitId);
       const russians = await getRussianResidentsByUnitId(input.unitId);

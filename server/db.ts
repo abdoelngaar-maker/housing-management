@@ -338,6 +338,60 @@ export async function getDetailedUnitsReport() {
   return report;
 }
 
+export async function getFullResidentHistory() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const allUnits = await db.select().from(units);
+  const unitMap = new Map(allUnits.map(u => [u.id, u.code]));
+  
+  const egyptians = await db.select().from(egyptianResidents);
+  const russians = await db.select().from(russianResidents);
+  
+  const history = [];
+  
+  for (const r of egyptians) {
+    history.push({
+      unitCode: r.unitId ? unitMap.get(r.unitId) || "غير معروف" : "غير مسكن حالياً",
+      name: r.name,
+      idNumber: r.nationalId,
+      phone: r.phone || "بدون هاتف",
+      checkInDate: r.checkInDate,
+      checkOutDate: r.checkOutDate,
+      status: r.status
+    });
+  }
+  
+  for (const r of russians) {
+    history.push({
+      unitCode: r.unitId ? unitMap.get(r.unitId) || "غير معروف" : "غير مسكن حالياً",
+      name: r.name,
+      idNumber: r.passportNumber,
+      phone: r.phone || "بدون هاتف",
+      checkInDate: r.checkInDate,
+      checkOutDate: r.checkOutDate,
+      status: r.status
+    });
+  }
+  
+  return history;
+}
+
+export async function getOccupancyStatsReport() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const allUnits = await db.select().from(units).orderBy(units.code);
+  return allUnits.map(u => ({
+    unitCode: u.code,
+    buildingName: u.buildingName || "غير محدد",
+    totalBeds: u.beds,
+    occupiedBeds: u.currentOccupants,
+    vacantBeds: u.beds - u.currentOccupants,
+    status: u.status
+  }));
+}
+
 export async function getUnitById(id: number) {
   const db = await getDb();
   if (!db) return undefined;

@@ -19,6 +19,8 @@ import ImportUnits from "./pages/ImportUnits";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import DetailedReport from "./pages/DetailedReport";
+import ResidentRecords from "./pages/ResidentRecords";
+import OccupancyReport from "./pages/OccupancyReport";
 
 function Router() {
   return (
@@ -38,6 +40,8 @@ function Router() {
             <Route path="/reports" component={Reports} />
             <Route path="/eviction" component={Eviction} />
             <Route path="/detailed-report" component={DetailedReport} />
+            <Route path="/resident-records" component={ResidentRecords} />
+            <Route path="/occupancy-report" component={OccupancyReport} />
             <Route path="/sectors" component={Sectors} />
             <Route path="/notifications" component={Notifications} />
             <Route path="/404" component={NotFound} />
