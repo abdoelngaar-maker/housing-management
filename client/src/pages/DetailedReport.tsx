@@ -14,7 +14,8 @@ export default function DetailedReport() {
   const utils = trpc.useUtils();
 
   const { data: report, isLoading, error } = trpc.units.detailedReport.useQuery(undefined, {
-    refetchInterval: 30000
+    refetchInterval: 30000,
+    retry: 1
   });
 
   const deleteMutation = trpc.units.delete.useMutation({
@@ -26,15 +27,15 @@ export default function DetailedReport() {
   });
 
   const filteredReport = useMemo(() => {
-    if (!report) return [];
+    if (!report || !Array.isArray(report)) return [];
     if (!search) return report;
     const s = search.toLowerCase();
     return report.filter(u => 
-      (u.code && u.code.toLowerCase().includes(s)) || 
-      (u.name && u.name.toLowerCase().includes(s)) || 
-      (u.ownerName && u.ownerName.toLowerCase().includes(s)) ||
-      (u.buildingName && u.buildingName.toLowerCase().includes(s)) ||
-      (u.residents && u.residents.some((r: any) => r.name && r.name.toLowerCase().includes(s)))
+      (u.code && String(u.code).toLowerCase().includes(s)) || 
+      (u.name && String(u.name).toLowerCase().includes(s)) || 
+      (u.ownerName && String(u.ownerName).toLowerCase().includes(s)) ||
+      (u.buildingName && String(u.buildingName).toLowerCase().includes(s)) ||
+      (u.residents && u.residents.some((r: any) => r.name && String(r.name).toLowerCase().includes(s)))
     );
   }, [report, search]);
 
@@ -63,6 +64,7 @@ export default function DetailedReport() {
       <div className="p-10 text-center text-red-500 bg-red-50 rounded-lg border border-red-200 m-6">
         <h3 className="text-lg font-bold mb-2">حدث خطأ أثناء تحميل البيانات</h3>
         <p>{error.message}</p>
+        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>إعادة المحاولة</Button>
       </div>
     );
   }
@@ -101,7 +103,7 @@ export default function DetailedReport() {
       </Card>
 
       <div className="space-y-6">
-        {filteredReport.length > 0 ? (
+        {filteredReport && filteredReport.length > 0 ? (
           filteredReport.map((unit) => (
             <Card key={unit.id} className="overflow-hidden border-r-4 border-r-primary shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="bg-muted/30 py-4 border-b">
@@ -158,7 +160,6 @@ export default function DetailedReport() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="grid grid-cols-1 lg:grid-cols-2">
-                  {/* Current Residents */}
                   <div className="p-4 border-l">
                     <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-primary">
                       <User className="h-4 w-4" />
@@ -189,7 +190,6 @@ export default function DetailedReport() {
                     )}
                   </div>
 
-                  {/* Past Residents / History */}
                   <div className="p-4 bg-muted/5">
                     <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-muted-foreground">
                       <ArrowRightLeft className="h-4 w-4" />
