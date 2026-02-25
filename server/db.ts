@@ -77,12 +77,23 @@ export async function initializeDatabase() {
       \`beds\` int NOT NULL DEFAULT 1,
       \`status\` enum('vacant','occupied','maintenance') NOT NULL DEFAULT 'vacant',
       \`currentOccupants\` int NOT NULL DEFAULT 0,
+      \`ownerName\` varchar(255),
+      \`buildingName\` varchar(255),
       \`notes\` text,
       \`createdAt\` timestamp NOT NULL DEFAULT (now()),
       \`updatedAt\` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
       CONSTRAINT \`units_id\` PRIMARY KEY(\`id\`),
       CONSTRAINT \`units_code_unique\` UNIQUE(\`code\`)
     )`);
+
+    // Migration for existing units table to add new columns if they don't exist
+    try {
+      await db.execute(sql`ALTER TABLE \`units\` ADD COLUMN IF NOT EXISTS \`ownerName\` varchar(255)`);
+      await db.execute(sql`ALTER TABLE \`units\` ADD COLUMN IF NOT EXISTS \`buildingName\` varchar(255)`);
+      console.log("[Database] Migration: Added ownerName and buildingName to units table");
+    } catch (e) {
+      console.log("[Database] Migration: Columns might already exist or table not created yet");
+    }
     console.log("[Database] Table 'units' ready");
 
     await db.execute(sql`CREATE TABLE IF NOT EXISTS \`egyptian_residents\` (
