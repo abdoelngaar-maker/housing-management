@@ -2,7 +2,6 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Loader2, Building2, User, Phone, Calendar, ArrowRightLeft, Trash2, FileText, Download } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -197,22 +196,22 @@ export default function DetailedReport() {
                     </h4>
                     {unit.pastResidents && unit.pastResidents.length > 0 ? (
                       <div className="max-h-[200px] overflow-y-auto pr-2 space-y-2">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                              <TableHead className="text-right h-8 text-xs">الاسم</TableHead>
-                              <TableHead className="text-right h-8 text-xs">تاريخ الرفد/المغادرة</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
+                        <table className="w-full text-right">
+                          <thead>
+                            <tr className="text-xs text-muted-foreground border-b">
+                              <th className="pb-2 font-medium">الاسم</th>
+                              <th className="pb-2 font-medium">تاريخ الرفد</th>
+                            </tr>
+                          </thead>
+                          <tbody>
                             {unit.pastResidents.map((record: any) => (
-                              <TableRow key={record.id} className="hover:bg-muted/30">
-                                <TableCell className="py-2 text-xs font-medium">{record.residentName}</TableCell>
-                                <TableCell className="py-2 text-xs text-muted-foreground">{formatDate(record.actionDate)}</TableCell>
-                              </TableRow>
+                              <tr key={record.id} className="border-b border-muted/20 last:border-0">
+                                <td className="py-2 text-xs font-medium">{record.residentName}</td>
+                                <td className="py-2 text-xs text-muted-foreground">{formatDate(record.actionDate)}</td>
+                              </tr>
                             ))}
-                          </TableBody>
-                        </Table>
+                          </tbody>
+                        </table>
                       </div>
                     ) : (
                       <div className="text-center py-8 opacity-50">

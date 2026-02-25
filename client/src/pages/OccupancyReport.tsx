@@ -23,8 +23,8 @@ export default function OccupancyReport() {
   }
 
   const filteredStats = stats?.filter(s => 
-    (s.unitCode?.toLowerCase().includes(search.toLowerCase())) ||
-    (s.buildingName?.toLowerCase().includes(search.toLowerCase()))
+    (s.unitCode && String(s.unitCode).toLowerCase().includes(search.toLowerCase())) ||
+    (s.buildingName && String(s.buildingName).toLowerCase().includes(search.toLowerCase()))
   );
 
   const exportToCSV = () => {

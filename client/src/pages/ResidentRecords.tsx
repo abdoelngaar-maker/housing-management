@@ -1,6 +1,4 @@
 import { trpc } from "@/lib/trpc";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
 import { 
   Table, 
   TableBody, 
@@ -24,17 +22,17 @@ export default function ResidentRecords() {
   }
 
   const filteredHistory = history?.filter(r => 
-    (r.name?.toLowerCase().includes(search.toLowerCase())) ||
-    (r.unitCode?.toLowerCase().includes(search.toLowerCase())) ||
-    (r.idNumber?.toLowerCase().includes(search.toLowerCase()))
+    (r.name && String(r.name).toLowerCase().includes(search.toLowerCase())) ||
+    (r.unitCode && String(r.unitCode).toLowerCase().includes(search.toLowerCase())) ||
+    (r.idNumber && String(r.idNumber).toLowerCase().includes(search.toLowerCase()))
   );
 
-  const formatDate = (dateStr: string | null | undefined) => {
+  const formatDate = (dateStr: any) => {
     if (!dateStr) return "-";
     try {
       const date = new Date(Number(dateStr));
       if (isNaN(date.getTime())) return "-";
-      return format(date, "dd MMMM yyyy", { locale: ar });
+      return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (e) {
       return "-";
     }
@@ -49,8 +47,8 @@ export default function ResidentRecords() {
       r.name || "",
       r.idNumber || "",
       r.phone || "",
-      r.checkInDate ? format(new Date(Number(r.checkInDate)), "yyyy-MM-dd") : "-",
-      r.checkOutDate ? format(new Date(Number(r.checkOutDate)), "yyyy-MM-dd") : ""
+      r.checkInDate ? new Date(Number(r.checkInDate)).toISOString().split('T')[0] : "-",
+      r.checkOutDate ? new Date(Number(r.checkOutDate)).toISOString().split('T')[0] : ""
     ]);
 
     const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
