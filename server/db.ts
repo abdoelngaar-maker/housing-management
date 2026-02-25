@@ -88,11 +88,20 @@ export async function initializeDatabase() {
 
     // Migration for existing units table to add new columns if they don't exist
     try {
-      await db.execute(sql`ALTER TABLE \`units\` ADD COLUMN IF NOT EXISTS \`ownerName\` varchar(255)`);
-      await db.execute(sql`ALTER TABLE \`units\` ADD COLUMN IF NOT EXISTS \`buildingName\` varchar(255)`);
-      console.log("[Database] Migration: Added ownerName and buildingName to units table");
+      // Check if columns exist first to avoid errors on some MySQL versions
+      const columns: any = await db.execute(sql`SHOW COLUMNS FROM \`units\``);
+      const columnNames = columns[0].map((c: any) => c.Field);
+      
+      if (!columnNames.includes('ownerName')) {
+        await db.execute(sql`ALTER TABLE \`units\` ADD COLUMN \`ownerName\` varchar(255)`);
+        console.log("[Database] Migration: Added ownerName to units table");
+      }
+      if (!columnNames.includes('buildingName')) {
+        await db.execute(sql`ALTER TABLE \`units\` ADD COLUMN \`buildingName\` varchar(255)`);
+        console.log("[Database] Migration: Added buildingName to units table");
+      }
     } catch (e) {
-      console.log("[Database] Migration: Columns might already exist or table not created yet");
+      console.error("[Database] Migration failed:", e);
     }
     console.log("[Database] Table 'units' ready");
 
