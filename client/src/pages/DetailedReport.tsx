@@ -13,7 +13,7 @@ export default function DetailedReport() {
   const [search, setSearch] = useState("");
   const utils = trpc.useUtils();
 
-  const { data: report, isLoading } = trpc.units.detailedReport.useQuery(undefined, {
+  const { data: report, isLoading, error } = trpc.units.detailedReport.useQuery(undefined, {
     refetchInterval: 30000
   });
 
@@ -30,18 +30,19 @@ export default function DetailedReport() {
     if (!search) return report;
     const s = search.toLowerCase();
     return report.filter(u => 
-      u.code.toLowerCase().includes(s) || 
-      u.name.toLowerCase().includes(s) || 
+      (u.code && u.code.toLowerCase().includes(s)) || 
+      (u.name && u.name.toLowerCase().includes(s)) || 
       (u.ownerName && u.ownerName.toLowerCase().includes(s)) ||
       (u.buildingName && u.buildingName.toLowerCase().includes(s)) ||
-      u.residents.some((r: any) => r.name.toLowerCase().includes(s))
+      (u.residents && u.residents.some((r: any) => r.name && r.name.toLowerCase().includes(s)))
     );
   }, [report, search]);
 
-  const formatDate = (timestamp: number | null | undefined) => {
+  const formatDate = (timestamp: any) => {
     if (!timestamp) return "-";
     try {
-      const date = new Date(timestamp);
+      const date = new Date(Number(timestamp));
+      if (isNaN(date.getTime())) return "-";
       return date.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
     } catch (e) {
       return "-";
@@ -53,6 +54,15 @@ export default function DetailedReport() {
       <div className="flex flex-col items-center justify-center py-24 gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="text-muted-foreground animate-pulse">جاري تحميل السجل التفصيلي...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-10 text-center text-red-500 bg-red-50 rounded-lg border border-red-200 m-6">
+        <h3 className="text-lg font-bold mb-2">حدث خطأ أثناء تحميل البيانات</h3>
+        <p>{error.message}</p>
       </div>
     );
   }
@@ -152,9 +162,9 @@ export default function DetailedReport() {
                   <div className="p-4 border-l">
                     <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-primary">
                       <User className="h-4 w-4" />
-                      الساكنون الحاليون ({unit.residents.length})
+                      الساكنون الحاليون ({unit.residents?.length || 0})
                     </h4>
-                    {unit.residents.length > 0 ? (
+                    {unit.residents && unit.residents.length > 0 ? (
                       <div className="space-y-3">
                         {unit.residents.map((r: any) => (
                           <div key={r.id} className="bg-muted/40 p-3 rounded-lg border flex items-start justify-between gap-2">
@@ -185,7 +195,7 @@ export default function DetailedReport() {
                       <ArrowRightLeft className="h-4 w-4" />
                       سجل المغادرين
                     </h4>
-                    {unit.pastResidents.length > 0 ? (
+                    {unit.pastResidents && unit.pastResidents.length > 0 ? (
                       <div className="max-h-[200px] overflow-y-auto pr-2 space-y-2">
                         <Table>
                           <TableHeader>
