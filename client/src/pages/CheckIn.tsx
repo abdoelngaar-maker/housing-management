@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera, Upload, Keyboard, Loader2, CheckCircle2, AlertCircle, ScanLine, Building2, Clock, Search } from "lucide-react";
+import { Camera, Upload, Keyboard, Loader2, CheckCircle2, AlertCircle, ScanLine, Building2, Clock, Search, X, Maximize2 } from "lucide-react";
 import { useState, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
@@ -16,6 +16,8 @@ export default function CheckIn() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<any[]>([]);
   const [confidence, setConfidence] = useState<number | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   // Egyptian form
   const [egName, setEgName] = useState("");
@@ -125,7 +127,7 @@ export default function CheckIn() {
   const resetForm = () => {
     setEgName(""); setEgNationalId(""); setEgPhone(""); setEgShift(""); setEgUnitId("");
     setRuName(""); setRuPassport(""); setRuNationality("Russian"); setRuGender("male"); setRuPhone(""); setRuShift(""); setRuUnitId("");
-    setConfidence(null); setScanResults([]); setUnitSearch("");
+    setConfidence(null); setScanResults([]); setUnitSearch(""); setUploadedImage(null);
     const now = new Date().toISOString().slice(0, 16);
     setEgCheckInDate(now); setRuCheckInDate(now);
   };
@@ -137,6 +139,7 @@ export default function CheckIn() {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
+      setUploadedImage(base64);
       setIsScanning(true);
       if (activeTab === "egyptian") {
         scanEgyptian.mutate({ imageBase64: base64 });
@@ -168,6 +171,7 @@ export default function CheckIn() {
     canvas.height = video.videoHeight;
     canvas.getContext("2d")?.drawImage(video, 0, 0);
     const base64 = canvas.toDataURL("image/jpeg", 0.9);
+    setUploadedImage(base64);
 
     setIsScanning(true);
     if (activeTab === "egyptian") {
@@ -269,254 +273,353 @@ export default function CheckIn() {
   );
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto px-4">
       <div>
         <h1 className="text-2xl font-bold text-foreground">تسكين فردي</h1>
         <p className="text-muted-foreground text-sm mt-1">تسكين ساكن جديد باستخدام المسح الضوئي أو الإدخال اليدوي</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); resetForm(); }}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="egyptian" className="gap-2">
-            مصري (شقة)
-          </TabsTrigger>
-          <TabsTrigger value="russian" className="gap-2">
-            روسي (شاليه)
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="egyptian">مصري (شقة)</TabsTrigger>
+          <TabsTrigger value="russian">روسي (شاليه)</TabsTrigger>
         </TabsList>
 
-        {/* Scan Options */}
-        <Card className="mt-4">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <ScanLine className="h-5 w-5" />
-              طريقة إدخال البيانات
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-3">
-              <Button
-                variant={scanMode === "camera" ? "default" : "outline"}
-                className="h-auto py-3 flex flex-col gap-1"
-                onClick={startCamera}
-              >
-                <Camera className="h-5 w-5" />
-                <span className="text-xs">كاميرا</span>
-              </Button>
-              <Button
-                variant={scanMode === "upload" ? "default" : "outline"}
-                className="h-auto py-3 flex flex-col gap-1"
-                onClick={() => { setScanMode("upload"); fileInputRef.current?.click(); }}
-              >
-                <Upload className="h-5 w-5" />
-                <span className="text-xs">رفع صورة</span>
-              </Button>
-              <Button
-                variant={scanMode === "manual" ? "default" : "outline"}
-                className="h-auto py-3 flex flex-col gap-1"
-                onClick={() => setScanMode("manual")}
-              >
-                <Keyboard className="h-5 w-5" />
-                <span className="text-xs">يدوي</span>
-              </Button>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Form and Scan Options */}
+          <div className={`${uploadedImage ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-6`}>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ScanLine className="h-5 w-5 text-primary" />
+                  طريقة إدخال البيانات
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <Button
+                    variant={scanMode === "camera" ? "default" : "outline"}
+                    className="flex flex-col h-20 gap-2"
+                    onClick={startCamera}
+                  >
+                    <Camera className="h-5 w-5" />
+                    كاميرا
+                  </Button>
+                  <Button
+                    variant={scanMode === "upload" ? "default" : "outline"}
+                    className="flex flex-col h-20 gap-2"
+                    onClick={() => {
+                      setScanMode("upload");
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <Upload className="h-5 w-5" />
+                    رفع صورة
+                  </Button>
+                  <Button
+                    variant={scanMode === "manual" ? "default" : "outline"}
+                    className="flex flex-col h-20 gap-2"
+                    onClick={() => {
+                      setScanMode("manual");
+                      cameraStream?.getTracks().forEach(t => t.stop());
+                      setCameraStream(null);
+                    }}
+                  >
+                    <Keyboard className="h-5 w-5" />
+                    يدوي
+                  </Button>
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                />
+
+                {scanMode === "camera" && cameraStream && (
+                  <div className="mt-6 space-y-4">
+                    <div className="relative aspect-video rounded-lg overflow-hidden bg-black border-2 border-primary">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 border-2 border-dashed border-white/50 m-8 rounded-lg pointer-events-none" />
+                    </div>
+                    <Button className="w-full" onClick={capturePhoto}>
+                      التقاط صورة
+                    </Button>
+                    <canvas ref={canvasRef} className="hidden" />
+                  </div>
+                )}
+
+                {isScanning && (
+                  <div className="mt-6 p-6 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-4 bg-muted/30">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <div className="text-center">
+                      <p className="font-medium">جاري تحليل الصورة...</p>
+                      <p className="text-xs text-muted-foreground mt-1">يتم استخراج البيانات باستخدام Tesseract OCR محلياً</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <TabsContent value="egyptian" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">بيانات الساكن المصري</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="eg-name">الاسم الكامل (ثلاثي أو رباعي) *</Label>
+                      <Input
+                        id="eg-name"
+                        placeholder="الاسم الثلاثي أو الرباعي كاملاً"
+                        value={egName}
+                        onChange={(e) => setEgName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="eg-id">الرقم القومي *</Label>
+                      <Input
+                        id="eg-id"
+                        placeholder="14 رقم"
+                        value={egNationalId}
+                        onChange={(e) => setEgNationalId(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="eg-phone">رقم الهاتف</Label>
+                      <Input
+                        id="eg-phone"
+                        placeholder="رقم الهاتف"
+                        value={egPhone}
+                        onChange={(e) => setEgPhone(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>الشيفت</Label>
+                      <Select value={egShift} onValueChange={setEgShift}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الشيفت" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {shiftOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        تاريخ ووقت التسكين *
+                      </Label>
+                      <Input
+                        type="datetime-local"
+                        value={egCheckInDate}
+                        onChange={(e) => setEgCheckInDate(e.target.value)}
+                      />
+                    </div>
+                    <UnitSelector value={egUnitId} onChange={setEgUnitId} />
+                  </div>
+
+                  <Button
+                    className="w-full mt-4"
+                    size="lg"
+                    onClick={handleEgyptianSubmit}
+                    disabled={checkInEgyptian.isLoading}
+                  >
+                    {checkInEgyptian.isLoading ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                    تأكيد التسكين
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="russian" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">بيانات الساكن الروسي</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ru-name">الاسم الكامل *</Label>
+                      <Input
+                        id="ru-name"
+                        placeholder="Full name"
+                        value={ruName}
+                        onChange={(e) => setRuName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ru-id">رقم الجواز *</Label>
+                      <Input
+                        id="ru-id"
+                        placeholder="Passport number"
+                        value={ruPassport}
+                        onChange={(e) => setRuPassport(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>الجنسية</Label>
+                      <Input
+                        value={ruNationality}
+                        onChange={(e) => setRuNationality(e.target.value)}
+                        placeholder="Russian"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>النوع *</Label>
+                      <Select value={ruGender} onValueChange={(v: any) => setRuGender(v)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">ذكر</SelectItem>
+                          <SelectItem value="female">أنثى</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ru-phone">رقم الهاتف</Label>
+                      <Input
+                        id="ru-phone"
+                        placeholder="Phone number"
+                        value={ruPhone}
+                        onChange={(e) => setRuPhone(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>الشيفت</Label>
+                      <Select value={ruShift} onValueChange={setRuShift}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الشيفت" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {shiftOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        تاريخ ووقت التسكين *
+                      </Label>
+                      <Input
+                        type="datetime-local"
+                        value={ruCheckInDate}
+                        onChange={(e) => setRuCheckInDate(e.target.value)}
+                      />
+                    </div>
+                    <UnitSelector value={ruUnitId} onChange={setRuUnitId} />
+                  </div>
+
+                  <Button
+                    className="w-full mt-4"
+                    size="lg"
+                    onClick={handleRussianSubmit}
+                    disabled={checkInRussian.isLoading}
+                  >
+                    {checkInRussian.isLoading ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                    تأكيد التسكين
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </div>
+
+          {/* Right Column: Uploaded Image Preview */}
+          {uploadedImage && (
+            <div className="lg:col-span-5 space-y-4">
+              <Card className="sticky top-6">
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    صورة المستند المرفوعة
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8" 
+                      onClick={() => setShowFullImage(true)}
+                      title="تكبير الصورة"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive" 
+                      onClick={() => setUploadedImage(null)}
+                      title="إزالة الصورة"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative group cursor-zoom-in" onClick={() => setShowFullImage(true)}>
+                    <img 
+                      src={uploadedImage} 
+                      alt="Uploaded Document" 
+                      className="w-full h-auto rounded-md border shadow-sm"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <Maximize2 className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      <strong>نصيحة للمراجعة:</strong> قارن الاسم والأرقام الموجودة في الصورة بالحقول المعبأة تلقائياً. يمكنك تعديل أي حقل يدوياً إذا وجدته غير دقيق.
+                    </p>
+                  </div>
+                  {confidence !== null && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <Badge variant={confidence > 80 ? "default" : "secondary"} className="text-[10px]">
+                        دقة الـ OCR: {confidence}%
+                      </Badge>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-
-            {/* Camera View */}
-            {scanMode === "camera" && cameraStream && (
-              <div className="mt-4 relative">
-                <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg" />
-                <canvas ref={canvasRef} className="hidden" />
-                <Button
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2"
-                  onClick={capturePhoto}
-                >
-                  <Camera className="h-4 w-4 ml-2" />
-                  التقاط
-                </Button>
-              </div>
-            )}
-
-            {/* Scanning indicator */}
-            {isScanning && (
-              <div className="mt-4 flex items-center justify-center gap-2 p-4 bg-primary/5 rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                <span className="text-sm text-primary">جاري تحليل الصورة واستخراج البيانات...</span>
-              </div>
-            )}
-
-            {/* Confidence indicator */}
-            {confidence !== null && (
-              <div className="mt-3 flex items-center gap-2">
-                {confidence >= 80 ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-orange-600" />
-                )}
-                <span className="text-sm">
-                  درجة الثقة: <strong className={confidence >= 80 ? "text-green-600" : "text-orange-600"}>{confidence}%</strong>
-                </span>
-                {confidence < 80 && (
-                  <span className="text-xs text-orange-600">يرجى التحقق من البيانات</span>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Egyptian Form */}
-        <TabsContent value="egyptian">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">بيانات الساكن المصري</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>الاسم الكامل (ثلاثي/رباعي) *</Label>
-                  <Input value={egName} onChange={e => setEgName(e.target.value)} placeholder="الاسم الثلاثي أو الرباعي كاملاً" />
-                </div>
-                <div>
-                  <Label>الرقم القومي *</Label>
-                  <Input value={egNationalId} onChange={e => setEgNationalId(e.target.value)} placeholder="14 رقم" maxLength={14} className="font-mono tracking-wider" dir="ltr" />
-                </div>
-                <div>
-                  <Label>رقم الهاتف</Label>
-                  <Input value={egPhone} onChange={e => setEgPhone(e.target.value)} placeholder="رقم الهاتف" dir="ltr" />
-                </div>
-                <div>
-                  <Label>الشيفت</Label>
-                  <Select value={egShift} onValueChange={setEgShift}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الشيفت" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shiftOptions.map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    تاريخ ووقت التسكين
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    value={egCheckInDate}
-                    onChange={e => setEgCheckInDate(e.target.value)}
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <UnitSelector value={egUnitId} onChange={setEgUnitId} />
-
-              <Button
-                className="w-full"
-                onClick={handleEgyptianSubmit}
-                disabled={checkInEgyptian.isPending}
-              >
-                {checkInEgyptian.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4 ml-2" />
-                )}
-                تأكيد التسكين
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Russian Form */}
-        <TabsContent value="russian">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">بيانات الساكن الروسي</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>الاسم الكامل *</Label>
-                  <Input value={ruName} onChange={e => setRuName(e.target.value)} placeholder="Full name" dir="ltr" />
-                </div>
-                <div>
-                  <Label>رقم الجواز *</Label>
-                  <Input value={ruPassport} onChange={e => setRuPassport(e.target.value)} placeholder="Passport number" className="font-mono tracking-wider" dir="ltr" />
-                </div>
-                <div>
-                  <Label>الجنسية</Label>
-                  <Input value={ruNationality} onChange={e => setRuNationality(e.target.value)} placeholder="Nationality" dir="ltr" />
-                </div>
-                <div>
-                  <Label>النوع *</Label>
-                  <Select value={ruGender} onValueChange={(v) => setRuGender(v as "male" | "female")}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">ذكر</SelectItem>
-                      <SelectItem value="female">أنثى</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>رقم الهاتف</Label>
-                  <Input value={ruPhone} onChange={e => setRuPhone(e.target.value)} placeholder="Phone number" dir="ltr" />
-                </div>
-                <div>
-                  <Label>الشيفت</Label>
-                  <Select value={ruShift} onValueChange={setRuShift}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الشيفت" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shiftOptions.map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    تاريخ ووقت التسكين
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    value={ruCheckInDate}
-                    onChange={e => setRuCheckInDate(e.target.value)}
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <UnitSelector value={ruUnitId} onChange={setRuUnitId} />
-
-              <Button
-                className="w-full"
-                onClick={handleRussianSubmit}
-                disabled={checkInRussian.isPending}
-              >
-                {checkInRussian.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4 ml-2" />
-                )}
-                تأكيد التسكين
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          )}
+        </div>
       </Tabs>
+
+      {/* Full Screen Image Modal */}
+      {showFullImage && uploadedImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-200"
+          onClick={() => setShowFullImage(false)}
+        >
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="absolute top-4 right-4 z-[101] rounded-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+            onClick={(e) => { e.stopPropagation(); setShowFullImage(false); }}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={uploadedImage} 
+              alt="Full Size Document" 
+              className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
