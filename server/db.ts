@@ -11,6 +11,7 @@ import {
   notifications, InsertNotification,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { getFullResidentHistory } from "./db";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -806,3 +807,44 @@ export async function getDetailedUnitReport() {
     };
   });
 }
+export async function getFullResidentHistory() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const egyptians = await db.query.egyptianResidents.findMany({
+    with: {
+      unit: true,
+    },
+  });
+
+  const russians = await db.query.russianResidents.findMany({
+    with: {
+      unit: true,
+    },
+  });
+
+  const formattedEgyptians = egyptians.map(r => ({
+    id: r.id,
+    name: r.name,
+    type: "egyptian",
+    unitCode: r.unit?.code ?? null,
+    status: r.status,
+    checkInDate: r.checkInDate,
+    checkOutDate: r.checkOutDate ?? null,
+  }));
+
+  const formattedRussians = russians.map(r => ({
+    id: r.id,
+    name: r.name,
+    type: "russian",
+    unitCode: r.unit?.code ?? null,
+    status: r.status,
+    checkInDate: r.checkInDate,
+    checkOutDate: r.checkOutDate ?? null,
+  }));
+
+  return [...formattedEgyptians, ...formattedRussians].sort(
+    (a, b) => (b.checkInDate ?? 0) - (a.checkInDate ?? 0)
+  );
+}
+
