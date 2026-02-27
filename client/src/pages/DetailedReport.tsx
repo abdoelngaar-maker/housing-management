@@ -12,7 +12,7 @@ export default function DetailedReport() {
   const [search, setSearch] = useState("");
   const utils = trpc.useUtils();
 
-  const { data: report, isLoading, error } = trpc.units.detailedReport.useQuery(undefined, {
+  const { data: report, isLoading, error } = trpc.allReports.detailedUnits.useQuery(undefined, {
     refetchInterval: 30000,
     retry: 1
   });
@@ -20,7 +20,7 @@ export default function DetailedReport() {
   const deleteMutation = trpc.units.delete.useMutation({
     onSuccess: () => {
       toast.success("تم حذف الوحدة بنجاح");
-      utils.units.detailedReport.invalidate();
+      utils.allReports.detailedUnits.invalidate();
     },
     onError: (err) => toast.error("فشل الحذف: " + err.message),
   });
@@ -62,7 +62,7 @@ export default function DetailedReport() {
     return (
       <div className="p-10 text-center text-red-500 bg-red-50 rounded-lg border border-red-200 m-6">
         <h3 className="text-lg font-bold mb-2">حدث خطأ أثناء تحميل البيانات</h3>
-        <p>{error.message}</p>
+        <p className="text-sm font-mono">{error.message}</p>
         <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>إعادة المحاولة</Button>
       </div>
     );

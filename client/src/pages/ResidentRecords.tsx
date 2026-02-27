@@ -14,11 +14,15 @@ import { useState } from "react";
 import { Download, Search, Loader2 } from "lucide-react";
 
 export default function ResidentRecords() {
-  const { data: history, isLoading, error } = trpc.units.residentHistory.useQuery();
+  const { data: history, isLoading, error } = trpc.allReports.residentHistory.useQuery();
   const [search, setSearch] = useState("");
 
   if (error) {
-    return <div className="p-10 text-red-500">حدث خطأ أثناء تحميل البيانات: {error.message}</div>;
+    return <div className="p-10 text-red-500 text-center bg-red-50 rounded-lg m-6 border border-red-200">
+      <h3 className="font-bold mb-2">حدث خطأ أثناء تحميل البيانات</h3>
+      <p className="text-sm font-mono">{error.message}</p>
+      <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>إعادة المحاولة</Button>
+    </div>;
   }
 
   const filteredHistory = history?.filter(r => 
@@ -32,7 +36,7 @@ export default function ResidentRecords() {
     try {
       const date = new Date(Number(dateStr));
       if (isNaN(date.getTime())) return "-";
-      return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+      return date.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
     } catch (e) {
       return "-";
     }
@@ -66,7 +70,7 @@ export default function ResidentRecords() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">سجل الساكنين التفصيلي</h1>
+        <h1 className="text-2xl font-bold">سجل الساكنين التفصيلي</h1>
         <Button onClick={exportToCSV} variant="outline" className="flex items-center gap-2">
           <Download className="w-4 h-4" />
           تصدير إكسيل
@@ -82,6 +86,7 @@ export default function ResidentRecords() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pr-10"
+              dir="rtl"
             />
           </div>
         </CardHeader>
@@ -104,16 +109,22 @@ export default function ResidentRecords() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredHistory?.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{r.unitCode}</TableCell>
-                      <TableCell>{r.name}</TableCell>
-                      <TableCell className="font-mono">{r.idNumber}</TableCell>
-                      <TableCell>{r.phone}</TableCell>
-                      <TableCell>{formatDate(r.checkInDate)}</TableCell>
-                      <TableCell className="text-red-600 font-bold">{formatDate(r.checkOutDate)}</TableCell>
+                  {filteredHistory?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">لا توجد بيانات تطابق البحث</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    filteredHistory?.map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{r.unitCode}</TableCell>
+                        <TableCell>{r.name}</TableCell>
+                        <TableCell className="font-mono">{r.idNumber}</TableCell>
+                        <TableCell>{r.phone}</TableCell>
+                        <TableCell>{formatDate(r.checkInDate)}</TableCell>
+                        <TableCell className="text-red-600 font-bold">{formatDate(r.checkOutDate)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
