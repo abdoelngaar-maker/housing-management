@@ -899,6 +899,19 @@ export const appRouter = router({
     }),
   }),
 
+  // ===== ADDITIONAL REPORTS =====
+  allReports: router({
+    detailedUnits: publicProcedure.query(async () => {
+      return getDetailedUnitReport();
+    }),
+    residentHistory: publicProcedure.query(async () => {
+      return getFullResidentHistory();
+    }),
+    occupancyStats: publicProcedure.query(async () => {
+      return getOccupancyStats();
+    }),
+  }),
+
   // ===== OCCUPANCY RECORDS =====
   occupancyRecords: router({
     list: publicProcedure.query(async () => {
