@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Building2, Search, Users, BedDouble, DoorOpen, Loader2, Eye, Plus } from "lucide-react";
+import { Building2, Search, Users, BedDouble, DoorOpen, Loader2, Eye, Plus, Trash2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ export default function Units() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   // New unit form state
   const [newUnit, setNewUnit] = useState({
@@ -52,12 +53,31 @@ export default function Units() {
     onError: (err) => toast.error("فشل في الإضافة: " + err.message),
   });
 
+  const deleteMutation = trpc.units.delete.useMutation({
+    onSuccess: () => {
+      toast.success("تم حذف الوحدة بنجاح");
+      utils.units.list.invalidate();
+      utils.dashboard.stats.invalidate();
+      setDeleteId(null);
+    },
+    onError: (err) => toast.error("فشل في الحذف: " + err.message),
+  });
+
   const handleCreate = () => {
     if (!newUnit.code.trim() || !newUnit.name.trim()) {
       toast.error("الكود والاسم مطلوبان");
       return;
     }
     createMutation.mutate(newUnit);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: number, occupants: number) => {
+    e.stopPropagation();
+    if (occupants > 0) {
+      toast.error("لا يمكن حذف وحدة مسكونة حالياً");
+      return;
+    }
+    setDeleteId(id);
   };
 
   const getStatusBadge = (status: string) => {
@@ -259,7 +279,7 @@ export default function Units() {
           {units.map((unit) => (
             <Card
               key={unit.id}
-              className={`${getTypeColor(unit.type)} hover:shadow-lg transition-all cursor-pointer group`}
+              className={`${getTypeColor(unit.type)} hover:shadow-lg transition-all cursor-pointer group relative`}
               onClick={() => setLocation(`/units/${unit.id}`)}
             >
               <CardContent className="pt-4 pb-4">
@@ -277,47 +297,34 @@ export default function Units() {
 
                 <div className="grid grid-cols-3 gap-2 text-center mt-3">
                   <div className="bg-muted/50 rounded-lg p-2">
-                    <DoorOpen className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">غرف</p>
-                    <p className="text-sm font-bold text-card-foreground">{unit.rooms}</p>
+                    <DoorOpen className="h-4 w-4 mx-auto text-primary/70 mb-1" />
+                    <p className="text-[10px] text-muted-foreground">غرف</p>
+                    <p className="font-bold text-xs">{unit.rooms}</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-2">
-                    <BedDouble className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">أسرة</p>
-                    <p className="text-sm font-bold text-card-foreground">{unit.beds}</p>
+                    <BedDouble className="h-4 w-4 mx-auto text-primary/70 mb-1" />
+                    <p className="text-[10px] text-muted-foreground">أسرة</p>
+                    <p className="font-bold text-xs">{unit.beds}</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-2">
-                    <Users className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">سكان</p>
-                    <p className="text-sm font-bold text-card-foreground">
-                      {unit.currentOccupants}/{unit.beds}
-                    </p>
+                    <Users className="h-4 w-4 mx-auto text-primary/70 mb-1" />
+                    <p className="text-[10px] text-muted-foreground">سكان</p>
+                    <p className="font-bold text-xs">{unit.currentOccupants}</p>
                   </div>
                 </div>
 
-                {/* Occupancy bar */}
-                <div className="mt-3">
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        unit.currentOccupants >= unit.beds
-                          ? "bg-red-500"
-                          : unit.currentOccupants > 0
-                          ? "bg-orange-500"
-                          : "bg-green-500"
-                      }`}
-                      style={{ width: `${Math.min(100, (unit.currentOccupants / unit.beds) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-xs text-muted-foreground">
-                    الطابق: {unit.floor || "-"}
-                  </span>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Eye className="h-3 w-3 ml-1" />
-                    عرض
+                <div className="mt-4 pt-3 border-t flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
+                    <Eye className="h-3 w-3" />
+                    عرض التفاصيل
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                    onClick={(e) => handleDelete(e, unit.id, unit.currentOccupants)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -325,11 +332,40 @@ export default function Units() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <Building2 className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground">لا توجد وحدات مطابقة للبحث</p>
+        <div className="text-center py-16 bg-muted/30 rounded-lg border-2 border-dashed">
+          <Building2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+          <h3 className="text-lg font-medium">لا توجد وحدات</h3>
+          <p className="text-muted-foreground">لم يتم العثور على أي وحدات سكنية تطابق بحثك</p>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              تأكيد الحذف
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-foreground">هل أنت متأكد من رغبتك في حذف هذه الوحدة؟ لا يمكن التراجع عن هذا الإجراء.</p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <DialogClose asChild>
+              <Button variant="outline">إلغاء</Button>
+            </DialogClose>
+            <Button 
+              variant="destructive" 
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Trash2 className="h-4 w-4 ml-2" />}
+              تأكيد الحذف
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
