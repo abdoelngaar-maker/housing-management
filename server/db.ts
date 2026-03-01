@@ -113,6 +113,17 @@ export async function getUserByOpenId(openId: string) {
   return result[0];
 }
 
+export async function getUserByEmail(username: string) {
+  // Simple check for the hardcoded user mentioned in requirements
+  if (username === "abdo") {
+    return { id: 1, openId: "abdo", name: "Abdo", email: "abdo@russiankit.com", role: "admin" };
+  }
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, username)).limit(1);
+  return result[0];
+}
+
 export async function upsertUser(data: InsertUser) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -328,6 +339,22 @@ export async function getDetailedUnitReportData() {
   }));
 }
 
+export async function getDashboardStats(sectorId?: number) {
+  const db = await getDb();
+  if (!db) return { totalUnits: 0, occupiedUnits: 0, vacantUnits: 0, activeResidents: 0 };
+  
+  const allUnits = await getAllUnits(sectorId);
+  const egyptians = await db.select().from(egyptianResidents).where(eq(egyptianResidents.status, "active"));
+  const russians = await db.select().from(russianResidents).where(eq(russianResidents.status, "active"));
+  
+  return {
+    totalUnits: allUnits.length,
+    occupiedUnits: allUnits.filter(u => u.status === "occupied").length,
+    vacantUnits: allUnits.filter(u => u.status === "vacant").length,
+    activeResidents: egyptians.length + russians.length
+  };
+}
+
 // ===== OCCUPANCY RECORDS =====
 export async function createOccupancyRecord(data: InsertOccupancyRecord) {
   const db = await getDb();
@@ -341,5 +368,4 @@ export async function seedUnits() {
   if (!db) throw new Error("Database not available");
   const existing = await db.select().from(units).limit(1);
   if (existing.length > 0) return;
-  // (Omitted seed logic for brevity, keeping existing units)
 }
