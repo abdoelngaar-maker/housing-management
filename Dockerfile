@@ -5,21 +5,18 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
-
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 COPY patches ./patches/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies using npm
+RUN npm install
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN pnpm run build
+RUN npm run build
 
 # ============================================
 # Stage 2: Production image
@@ -28,13 +25,11 @@ FROM node:22-alpine AS production
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
-
 # Copy package files and install production dependencies only
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 COPY patches ./patches/
-RUN pnpm install --frozen-lockfile --prod
+
+RUN npm install --omit=dev
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
