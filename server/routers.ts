@@ -54,7 +54,7 @@ export const appRouter = router({
     }),
   }),
 
-  // ===== RESIDENTS =====
+  // ===== RESIDENTS (original paths) =====
   residents: router({
     checkInEgyptian: protectedProcedure.input(z.object({
       name: z.string().min(1),
@@ -95,6 +95,56 @@ export const appRouter = router({
     }),
   }),
 
+  // ===== EGYPTIAN RESIDENTS (Frontend expects this path) =====
+  egyptianResidents: router({
+    checkIn: protectedProcedure.input(z.object({
+      name: z.string().min(1),
+      nationalId: z.string().min(1),
+      phone: z.string().optional(),
+      shift: z.string().optional(),
+      unitId: z.number(),
+      checkInDate: z.number().optional(),
+      ocrConfidence: z.number().optional(),
+    })).mutation(async ({ input }) => {
+      const checkInDate = input.checkInDate ? new Date(input.checkInDate) : new Date();
+      await db.createEgyptianResident({
+        name: input.name,
+        nationalId: input.nationalId,
+        phone: input.phone,
+        unitId: input.unitId,
+        checkInDate,
+        status: "active",
+      });
+      return { success: true };
+    }),
+  }),
+
+  // ===== RUSSIAN RESIDENTS (Frontend expects this path) =====
+  russianResidents: router({
+    checkIn: protectedProcedure.input(z.object({
+      name: z.string().min(1),
+      passportNumber: z.string().min(1),
+      nationality: z.string().optional(),
+      gender: z.enum(["male", "female"]),
+      phone: z.string().optional(),
+      shift: z.string().optional(),
+      unitId: z.number(),
+      checkInDate: z.number().optional(),
+      ocrConfidence: z.number().optional(),
+    })).mutation(async ({ input }) => {
+      const checkInDate = input.checkInDate ? new Date(input.checkInDate) : new Date();
+      await db.createRussianResident({
+        name: input.name,
+        passportNumber: input.passportNumber,
+        gender: input.gender,
+        unitId: input.unitId,
+        checkInDate,
+        status: "active",
+      });
+      return { success: true };
+    }),
+  }),
+
   // ===== REPORTS (UNIFIED) =====
   allReports: router({
     residentHistory: publicProcedure.query(async () => {
@@ -122,8 +172,9 @@ export const appRouter = router({
     }),
   }),
 
-  // ===== OCR (TESSERACT) =====
+  // ===== OCR (TESSERACT - FREE) =====
   ocr: router({
+    // Original extract endpoint
     extract: protectedProcedure.input(z.object({
       imageUrl: z.string(),
       type: z.enum(["egyptian_id", "russian_passport"]),
@@ -150,9 +201,101 @@ export const appRouter = router({
         throw new Error("فشل استخراج البيانات: " + error.message);
       }
     }),
+
+    // Frontend expects scanEgyptianId (accepts imageBase64)
+    scanEgyptianId: protectedProcedure.input(z.object({
+      imageBase64: z.string(),
+    })).mutation(async ({ input }) => {
+      try {
+        const worker = await createWorker("ara+eng");
+        const { data: { text, confidence } } = await worker.recognize(input.imageBase64);
+        await worker.terminate();
+
+        // Extract 14-digit Egyptian national ID
+        let nationalId = "";
+        const idMatch = text.match(/\d{14}/);
+        if (idMatch) nationalId = idMatch[0];
+
+        // Try to extract name from Arabic text lines
+        const lines = text.split('\n').filter(l => l.trim().length > 3);
+        let name = "";
+        for (const line of lines) {
+          const arabicLine = line.trim();
+          if (/[\u0600-\u06FF]/.test(arabicLine) && arabicLine.length > 5) {
+            if (!arabicLine.includes("بطاقة") && !arabicLine.includes("رقم") && !arabicLine.includes("جمهورية")) {
+              name = arabicLine;
+              break;
+            }
+          }
+        }
+
+        const results = [{
+          name,
+          nationalId,
+          confidence: confidence / 100,
+        }];
+
+        return { results };
+      } catch (error: any) {
+        throw new Error("فشل استخراج بيانات البطاقة المصرية: " + error.message);
+      }
+    }),
+
+    // Frontend expects scanRussianPassport (accepts imageBase64)
+    scanRussianPassport: protectedProcedure.input(z.object({
+      imageBase64: z.string(),
+    })).mutation(async ({ input }) => {
+      try {
+        const worker = await createWorker("rus+eng");
+        const { data: { text, confidence } } = await worker.recognize(input.imageBase64);
+        await worker.terminate();
+
+        // Extract passport number
+        let passportNumber = "";
+        const passportMatch = text.match(/[A-Z0-9]{9,12}/);
+        if (passportMatch) passportNumber = passportMatch[0];
+
+        // Try to extract name
+        const lines = text.split('\n').filter(l => l.trim().length > 3);
+        let name = "";
+        let nationality = "Russian";
+        let gender = "male";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (/^[A-Z][a-zA-Z\s]+$/.test(trimmed) && trimmed.length > 5) {
+            name = trimmed;
+            break;
+          }
+        }
+
+        if (text.toLowerCase().includes("female") || text.includes("Ж") || text.includes("жен")) {
+          gender = "female";
+        }
+
+        const results = [{
+          name,
+          passportNumber,
+          nationality,
+          gender,
+          confidence: confidence / 100,
+        }];
+
+        return { results };
+      } catch (error: any) {
+        throw new Error("فشل استخراج بيانات جواز السفر: " + error.message);
+      }
+    }),
   }),
 
-  // ===== STATS =====
+  // ===== DASHBOARD STATS (Frontend expects this path) =====
+  dashboard: router({
+    stats: publicProcedure.input(z.object({ sectorId: z.number().optional() }).optional()).query(async ({ input }) => {
+      return db.getDashboardStats(input?.sectorId);
+    }),
+  }),
+
+  // ===== STATS (original path) =====
   stats: router({
     dashboard: publicProcedure.input(z.object({ sectorId: z.number().optional() })).query(async ({ input }) => {
       return db.getDashboardStats(input?.sectorId);
@@ -161,3 +304,4 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
