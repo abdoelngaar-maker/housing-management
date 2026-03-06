@@ -9,8 +9,8 @@ WORKDIR /app
 COPY package.json ./
 COPY patches ./patches/
 
-# Install dependencies using npm
-RUN npm install
+# Install dependencies using npm (--legacy-peer-deps to resolve peer conflicts)
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
@@ -29,7 +29,7 @@ WORKDIR /app
 COPY package.json ./
 COPY patches ./patches/
 
-RUN npm install --omit=dev
+RUN npm install --omit=dev --legacy-peer-deps
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
