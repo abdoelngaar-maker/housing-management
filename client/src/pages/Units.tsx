@@ -313,18 +313,19 @@ export default function Units() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t flex items-center justify-between ">
-                  <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
-                    <Eye className="h-3 w-3" />
+                <div className="mt-4 pt-3 border-t flex items-center justify-between gap-2">
+                  <Button variant="outline" size="sm" className="h-9 gap-2 text-xs flex-1" onClick={(e) => { e.stopPropagation(); setLocation(`/units/${unit.id}`); }}>
+                    <Eye className="h-4 w-4" />
                     عرض التفاصيل
                   </Button>
                   <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                    variant="destructive" 
+                    size="sm" 
+                    className="h-9 gap-2 text-xs"
                     onClick={(e) => handleDelete(e, unit.id, unit.currentOccupants)}
                   >
                     <Trash2 className="h-4 w-4" />
+                    حذف
                   </Button>
                 </div>
               </CardContent>
