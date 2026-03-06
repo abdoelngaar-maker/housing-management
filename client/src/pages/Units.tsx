@@ -33,7 +33,7 @@ export default function Units() {
     ownerName: "",
     buildingName: "",
     notes: "",
-  });
+  })
 
   const utils = trpc.useUtils();
 
