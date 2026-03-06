@@ -313,7 +313,7 @@ export default function Units() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="mt-4 pt-3 border-t flex items-center justify-between ">
                   <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
                     <Eye className="h-3 w-3" />
                     عرض التفاصيل
