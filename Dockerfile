@@ -48,5 +48,11 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 
+<<<<<<< HEAD
+# Start the application
+CMD ["node", "dist/index.js"]
+=======
 # Start the application using npm start to ensure migrations run
 CMD ["npm", "start"]
+
+>>>>>>> d68236dd7fd83a54ac74554f7902064381100ca7
