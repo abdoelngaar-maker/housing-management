@@ -1,58 +1,55 @@
 # ============================================
-# Stage 1: Install dependencies and build
+# Stage 1: Build
 # ============================================
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json ./
+# Copy package files first (better caching)
+COPY package.json package-lock.json* ./
 COPY patches ./patches/
 
-# Install dependencies using npm (--legacy-peer-deps to resolve peer conflicts)
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
-# Copy source code
+# Copy rest of project
 COPY . .
 
-# Build the application
+# Build project
 RUN npm run build
 
+
 # ============================================
-# Stage 2: Production image
+# Stage 2: Production
 # ============================================
 FROM node:22-alpine AS production
 
 WORKDIR /app
 
-# Copy package files and install production dependencies only
-COPY package.json ./
+# Copy package files
+COPY package.json package-lock.json* ./
 COPY patches ./patches/
 
-RUN npm install --omit=dev --legacy-peer-deps
+# Install only production deps
+RUN npm install --omit=dev --legacy-peer-deps && npm cache clean --force
 
-# Copy built files from builder
+# Copy build output
 COPY --from=builder /app/dist ./dist
 
-# Copy drizzle migrations
+# Copy drizzle
 COPY drizzle ./drizzle
 COPY drizzle.config.ts ./
 
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Expose port
+# Security: run as non-root user
+RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
+USER nodeuser
+
 EXPOSE 3000
 
-# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
 
-<<<<<<< HEAD
-# Start the application
 CMD ["node", "dist/index.js"]
-=======
-# Start the application using npm start to ensure migrations run
-CMD ["npm", "start"]
-
->>>>>>> d68236dd7fd83a54ac74554f7902064381100ca7
