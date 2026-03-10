@@ -131,7 +131,6 @@ export default function UnitDetails() {
                 {unit.status === "vacant" ? "فارغة" : unit.status === "occupied" ? "مشغولة" : "صيانة"}
               </Badge>
             </div>
-          </div>
 
           <div className="grid grid-cols-3 gap-4 mt-6">
             <div className="bg-muted/50 rounded-xl p-4 text-center">
