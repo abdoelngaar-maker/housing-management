@@ -20,6 +20,11 @@ export default function UnitDetails() {
   },
   onError: (err) => toast.error(err.message),
 });
+  const handleDeleteUnit = () => {
+  if (!confirm("هل أنت متأكد من حذف الوحدة؟ لا يمكن التراجع عن هذا الإجراء")) return;
+
+  deleteUnit.mutate({ id: unitId });
+};
   const utils = trpc.useUtils();
 
   const checkOutEgyptian = trpc.egyptianResidents.checkOut.useMutation({
@@ -80,7 +85,28 @@ export default function UnitDetails() {
       {/* Unit Info Card */}
       <Card className={`border-r-4 ${borderColor}`}>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div className="flex gap-2 mt-4">
+  <Button onClick={() => setLocation("/check-in")} size="sm">
+    <UserPlus className="h-4 w-4 ml-1" />
+    تسكين جديد
+  </Button>
+
+  <Button variant="outline" onClick={() => setLocation("/transfer")} size="sm">
+    نقل ساكنين
+  </Button>
+
+  <Button
+    variant="destructive"
+    size="sm"
+    onClick={handleDeleteUnit}
+    disabled={deleteUnit.isPending}
+  >
+    {deleteUnit.isPending ? (
+      <Loader2 className="h-4 w-4 animate-spin ml-1" />
+    ) : null}
+    حذف الوحدة
+  </Button>
+</div>
             <div>
               <p className="text-sm text-muted-foreground">الكود</p>
               <p className="text-lg font-bold text-card-foreground">{unit.code}</p>
