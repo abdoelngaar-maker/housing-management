@@ -13,7 +13,13 @@ export default function UnitDetails() {
 
   const { data: unit, isLoading } = trpc.units.getById.useQuery({ id: unitId }, { enabled: unitId > 0 });
   const { data: residents, isLoading: residentsLoading } = trpc.units.getResidents.useQuery({ unitId }, { enabled: unitId > 0 });
-
+  const deleteUnit = trpc.units.delete.useMutation({
+  onSuccess: () => {
+    toast.success("تم حذف الوحدة بنجاح");
+    setLocation("/units");
+  },
+  onError: (err) => toast.error(err.message),
+});
   const utils = trpc.useUtils();
 
   const checkOutEgyptian = trpc.egyptianResidents.checkOut.useMutation({
