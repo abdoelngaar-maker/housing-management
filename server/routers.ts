@@ -21,6 +21,11 @@ export const appRouter = router({
   }),
 
   // ===== UNITS =====
+  export const unitsRouter = router({
+  getById,
+  getResidents,
+  delete
+})
   units: router({
     list: publicProcedure.input(z.object({
       type: z.string().optional(),
