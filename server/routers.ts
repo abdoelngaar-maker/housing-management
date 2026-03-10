@@ -51,15 +51,24 @@ export const appRouter = router({
       await db.createUnit({ ...input, status: "vacant", currentOccupants: 0 });
       return { success: true };
     }),
-    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
-      await db.deleteUnit(input.id);
-      return { success: true };
-    }),
-    seed: protectedProcedure.mutation(async () => {
-      return db.seedUnits();
-    }),
-  }),
+    if (unit.currentOccupants > 0) {
+  toast.error("لا يمكن حذف وحدة بها سكان");
+  return;
+}
+delete: protectedProcedure
+  .input(z.object({
+    id: z.number()
+  }))
+  .mutation(async ({ input, ctx }) => {
 
+    await ctx.db.unit.delete({
+      where: { id: input.id }
+    });
+
+    return { success: true };
+  }),
+  
+    
   // ===== RESIDENTS (original paths) =====
   residents: router({
     checkInEgyptian: protectedProcedure.input(z.object({
