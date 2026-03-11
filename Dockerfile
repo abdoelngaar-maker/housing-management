@@ -18,7 +18,6 @@ COPY . .
 # Build project
 RUN npm run build
 
-
 # ============================================
 # Stage 2: Production
 # ============================================
@@ -43,13 +42,12 @@ COPY drizzle.config.ts ./
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Security: run as non-root user
-RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
-USER nodeuser
-
+# Expose port
 EXPOSE 3000
 
+# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
 
-CMD ["node", "dist/index.js"]
+# Start the application
+CMD ["npm", "start"]
