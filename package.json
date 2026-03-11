@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
-  "scripts": {
-    "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --bundle --format=esm --outfile=dist/index.js",
-    "start": "npm run db:push && NODE_ENV=production node dist/index.js",
+"scripts": {
+  "dev": "vite",
+  "build": "vite build && esbuild server/_core/index.ts --platform=node --bundle --format=esm --outfile=dist/index.js",
+  "start": "node dist/index.js"
+}
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
