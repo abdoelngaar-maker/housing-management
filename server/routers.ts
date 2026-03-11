@@ -20,12 +20,7 @@ export const appRouter = router({
     }),
   }),
 
-  // ===== UNITS =====
-  export const unitsRouter = router({
-  getById,
-  getResidents,
-  delete
-})
+
   units: router({
     list: publicProcedure.input(z.object({
       type: z.string().optional(),
@@ -56,10 +51,7 @@ export const appRouter = router({
       await db.createUnit({ ...input, status: "vacant", currentOccupants: 0 });
       return { success: true };
     }),
-    if (unit.currentOccupants > 0) {
-  toast.error("لا يمكن حذف وحدة بها سكان");
-  return;
-}
+    
 delete: protectedProcedure
   .input(z.object({
     id: z.number()
