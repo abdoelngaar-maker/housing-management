@@ -11,7 +11,7 @@ export default function Reports() {
   const [aiInsights, setAiInsights] = useState<string | null>(null);
 
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
-  const { data: reportData, isLoading: reportLoading } = trpc.reports.occupancy.useQuery();
+  const { da: reportData, isLoading: reportLoading } = trpc.reports.occupancy.useQuery();
 
   const aiInsightsMutation = trpc.reports.aiInsights.useMutation({
     onSuccess: (data) => {
