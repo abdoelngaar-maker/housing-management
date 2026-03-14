@@ -33,7 +33,7 @@ export const appRouter = router({
     getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
       return db.getUnitById(input.id);
     }),
-    getResidents: publicProcedure.input(z.object({ unitId: z.number() })).query(async ({ input }) > {
+    getResidents: publicProcedure.input(z.object({ unitId: z.number() })).query(async ({ input })  {
       return db.getUnitResidents(input.unitId);
     }),
     create: protectedProcedure.input(z.object({
