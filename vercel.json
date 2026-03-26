@@ -1,44 +1,42 @@
 {
-    "version": 2,
-    "builds": [
-          {
-                  "src": "package.json",
-                  "use": "@vercel/static-build",
-                  "config": { "distDir": "dist/public" }
-          },
-          {
-                  "src": "server/_core/index.ts",
-                  "use": "@vercel/node"
-          }
-    ],
-    "routes": [
-          {
-                  "src": "/api/trpc/(.*)",
-                  "dest": "server/_core/index.ts"
-          },
-          {
-                  "src": "/auth/(.*)",
-                  "dest": "server/_core/index.ts"
-          },
-          {
-                  "src": "/uploads/(.*)",
-                  "dest": "server/_core/index.ts"
-          },
-          {
-                  "src": "/health",
-                  "dest": "server/_core/index.ts"
-          },
-          {
-                  "src": "/(.*)",
-                  "dest": "/$1",
-                  "continue": true
-          },
-          {
-                  "handle": "filesystem"
-          },
-          {
-                  "src": "/(.*)",
-                  "dest": "/index.html"
-          }
-    ]
+      "version": 2,
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist",
+      "env": {
+              "NODE_ENV": "production"
+      },
+      "functions": {
+              "server/_core/index.ts": {
+                        "runtime": "nodejs18.x",
+                        "memory": 1024,
+                        "maxDuration": 60
+              }
+      },
+      "routes": [
+              {
+                        "src": "/api/trpc/(.*)",
+                        "dest": "server/_core/index.ts",
+                        "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+              },
+              {
+                        "src": "/auth/(.*)",
+                        "dest": "server/_core/index.ts",
+                        "methods": ["GET", "POST"]
+              },
+              {
+                        "src": "/uploads/(.*)",
+                        "dest": "server/_core/index.ts",
+                        "methods": ["GET", "POST"]
+              },
+              {
+                        "src": "/health",
+                        "dest": "server/_core/index.ts",
+                        "methods": ["GET"]
+              },
+              {
+                        "src": "/(.*)",
+                        "dest": "/index.html",
+                        "methods": ["GET"]
+              }
+      ]
 }
