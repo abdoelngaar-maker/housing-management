@@ -5,7 +5,7 @@ export const ENV = {
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   isProduction: process.env.NODE_ENV === "production",
   // OpenAI API for LLM (OCR and AI insights)
-  openaiApiKey: process.env.OPENAI_API_KEY ?? "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",
+  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
   openaiBaseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
   openaiModel: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
   // S3-compatible storage (optional - for image uploads)
