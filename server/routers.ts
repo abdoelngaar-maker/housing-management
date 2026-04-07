@@ -1,15 +1,28 @@
-// Corrected content fixing all truncated Unicode escape sequences
+import { createRouter } from '_core/trpc';
+import { ocrRouter } from '_core/ocrRouter';
+import db from 'db';
 
-// Import necessary modules
-import express from 'express';
+export const housingRouter = createRouter()
+  .merge('ocr.', ocrRouter)
+  .query('findResidents', {
+    resolve({ ctx }) {
+      return db.residents.findMany({ where: { active: true } });
+    }
+  })
+  .mutation('bulkCheckIn', {
+    input: z.array(z.object({ id: z.string() })),
+    resolve({ input }) {
+      return db.residents.updateMany({
+        where: { id: { in: input.map(res => res.id) } },
+        data: { status: 'checked-in' }
+      });
+    }
+  })
+  .query('getUnits', {
+    resolve() {
+      return db.units.findMany();
+    }
+  });
 
-// Define the router
-const router = express.Router();
-
-// Define routes
-router.get('/example', (req, res) => {
-    res.json({ message: 'Hello, world!' });
-});
-
-// Export the router
-export default router;
+export const ocrAndHousingRouter = createRouter() 
+  .merge('housing.', housingRouter);
